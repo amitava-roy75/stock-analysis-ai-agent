@@ -1,0 +1,3 @@
+IMAGE                                                                      ID             DISK USAGE   CONTENT SIZE   EXTRA
+103549976305.dkr.ecr.ap-south-1.amazonaws.com/stock-analysis-ai-agent:v1   1f5eb3dd49af        937MB          218MB        
+stock-analysis-ai-agent:v1                                                 1f5eb3dd49af        937MB          218MB        

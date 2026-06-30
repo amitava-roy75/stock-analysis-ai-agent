@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: stock-analysis-ai
+
+spec:
+  replicas: 3
+
+  selector:
+    matchLabels:
+      app: stock-analysis-ai
+
+  template:
+    metadata:
+      labels:
+        app: stock-analysis-ai
+
+    spec:
+      containers:
+        - name: stock-analysis-ai
+
+          image: 103549976305.dkr.ecr.ap-south-1.amazonaws.com/stock-analysis-ai-agent:v10
+
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 8000
+
+          env:
+            - name: ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: stock-analysis-config
+                  key: ALLOWED_ORIGINS
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "1Gi"

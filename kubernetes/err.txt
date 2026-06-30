@@ -1,0 +1,61 @@
+Name:             stock-analysis-ai-6bb545ff4d-2fqcz
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             ip-192-168-64-21.ap-south-1.compute.internal/192.168.64.21
+Start Time:       Sun, 28 Jun 2026 20:38:22 +0530
+Labels:           app=stock-analysis-ai
+                  pod-template-hash=6bb545ff4d
+Annotations:      <none>
+Status:           Pending
+IP:               192.168.67.250
+IPs:
+  IP:           192.168.67.250
+Controlled By:  ReplicaSet/stock-analysis-ai-6bb545ff4d
+Containers:
+  stock-analysis-ai:
+    Container ID:   
+    Image:          103549976305.dkr.ecr.ap-south-1.amazonaws.com/stock-analysis-ai-agent:v1
+    Image ID:       
+    Port:           8000/TCP
+    Host Port:      0/TCP
+    State:          Waiting
+      Reason:       ImagePullBackOff
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  1Gi
+    Requests:
+      cpu:        250m
+      memory:     512Mi
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-tmhbt (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-tmhbt:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                  From               Message
+  ----     ------     ----                 ----               -------
+  Normal   Scheduled  2m27s                default-scheduler  Successfully assigned default/stock-analysis-ai-6bb545ff4d-2fqcz to ip-192-168-64-21.ap-south-1.compute.internal
+  Normal   Pulling    54s (x4 over 2m27s)  kubelet            spec.containers{stock-analysis-ai}: Pulling image "103549976305.dkr.ecr.ap-south-1.amazonaws.com/stock-analysis-ai-agent:v1"
+  Warning  Failed     54s (x4 over 2m26s)  kubelet            spec.containers{stock-analysis-ai}: Failed to pull image "103549976305.dkr.ecr.ap-south-1.amazonaws.com/stock-analysis-ai-agent:v1": rpc error: code = NotFound desc = failed to pull and unpack image "103549976305.dkr.ecr.ap-south-1.amazonaws.com/stock-analysis-ai-agent:v1": no match for platform in manifest: not found
+  Warning  Failed     54s (x4 over 2m26s)  kubelet            spec.containers{stock-analysis-ai}: Error: ErrImagePull
+  Normal   BackOff    13s (x8 over 2m26s)  kubelet            spec.containers{stock-analysis-ai}: Back-off pulling image "103549976305.dkr.ecr.ap-south-1.amazonaws.com/stock-analysis-ai-agent:v1"
+  Warning  Failed     13s (x8 over 2m26s)  kubelet            spec.containers{stock-analysis-ai}: Error: ImagePullBackOff

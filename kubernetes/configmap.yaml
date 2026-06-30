@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: stock-analysis-config
+
+data:
+  ALLOWED_ORIGINS: "http://ab0c2bdd3cd71475ea3636e427f33a6b-841676968.ap-south-1.elb.amazonaws.com"

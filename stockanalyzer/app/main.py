@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -48,18 +49,27 @@ app = FastAPI(
 )
 
 # ----------------------------------------------------
-# CORS
+# CORS Configuration
 # ----------------------------------------------------
+
+allowed_origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173,http://localhost:8081"
+).split(",")
+
+logger.info("Allowed CORS Origins:")
+for origin in allowed_origins:
+    logger.info("   %s", origin)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+logger.info("CORS Middleware Initialized")
 
 # ----------------------------------------------------
 
@@ -90,8 +100,14 @@ async def list_tools():
     }
 
 
+# ----------------------------------------------------
+# Register REST APIs
+# ----------------------------------------------------
+
 app.include_router(chat_router)
 app.include_router(analyze_router)
 app.include_router(stock_router)
 app.include_router(price_history_router)
 app.include_router(company_router)
+
+logger.info("All API Routes Registered Successfully")
