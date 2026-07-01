@@ -1,49 +1,35 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+from fastapi import HTTPException
 
-from models.analysis_response import AnalysisResponse
 from config.logging_config import logger
 from graph.stock_graph import graph
+from guardrails.guard_service import guard_service
 
 router = APIRouter(
     prefix="",
     tags=["Stock Analysis"]
 )
 
-@router.get(
-    "/analyze",
-    response_model=AnalysisResponse
-)
 
+@router.get("/analyze")
 async def analyze(query: str):
-    """
-    Execute the complete LangGraph workflow.
-
-    Workflow
-
-        Planner
-            ↓
-        Router
-            ↓
-        Reflection
-
-    Returns
-
-        {
-            summary,
-            recommendation,
-            confidence,
-            metrics,
-            news,
-            report
-        }
-    """
 
     try:
 
-        logger.info("=========================================")
+        logger.info("========================================")
         logger.info("Analyze Request")
         logger.info("Query : %s", query)
-        logger.info("=========================================")
+        logger.info("========================================")
+
+        #
+        # Input Guard
+        #
+
+        guard_service.validate(query)
+
+        #
+        # Initial Graph State
+        #
 
         state = {
 
@@ -63,37 +49,92 @@ async def analyze(query: str):
 
             "summary": "",
 
-            "recommendation": "HOLD",
+            "recommendation": "",
 
-            "confidence": "LOW",
+            "confidence": "",
 
             "metrics": {},
 
             "news": [],
 
+            "knowledge": "",
+
+            "comparison": {},
+
             "final_answer": ""
 
         }
 
-        #
-        # IMPORTANT
-        #
-        # Since PlannerNode, RouterNode and ReflectionNode
-        # are async, always use ainvoke()
-        #
-
         result = await graph.ainvoke(state)
 
-        logger.info("Workflow completed successfully")
+        intent = result.get(
+            "intent",
+            ""
+        ).upper()
 
-        response = {
+        #
+        # ------------------------------------
+        # KNOWLEDGE
+        # ------------------------------------
+        #
+
+        if intent == "KNOWLEDGE":
+
+            return {
+
+                "query": query,
+
+                "intent": intent,
+
+                "summary": result.get(
+                    "summary",
+                    ""
+                ),
+
+                "report": result.get(
+                    "final_answer",
+                    ""
+                )
+
+            }
+
+        #
+        # ------------------------------------
+        # COMPARE
+        # ------------------------------------
+        #
+
+        if intent == "COMPARE":
+
+            return {
+
+                "query": query,
+
+                "intent": intent,
+
+                "summary": result.get(
+                    "summary",
+                    ""
+                ),
+
+                "report": result.get(
+                    "final_answer",
+                    ""
+                )
+
+            }
+
+        #
+        # ------------------------------------
+        # ANALYZE
+        # ------------------------------------
+        #
+
+        return {
 
             "query": query,
 
-            "intent": result.get(
-                "intent",
-                ""
-            ),
+            "intent": intent,
 
             "company": result.get(
                 "company",
@@ -112,12 +153,12 @@ async def analyze(query: str):
 
             "recommendation": result.get(
                 "recommendation",
-                "HOLD"
+                ""
             ),
 
             "confidence": result.get(
                 "confidence",
-                "LOW"
+                ""
             ),
 
             "metrics": result.get(
@@ -137,9 +178,8 @@ async def analyze(query: str):
 
         }
 
-        logger.info("Returning structured response")
-
-        return response
+    except HTTPException:
+        raise
 
     except Exception as ex:
 

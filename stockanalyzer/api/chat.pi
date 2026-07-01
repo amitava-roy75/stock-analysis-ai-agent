@@ -1,7 +1,0 @@
-from services.bedrock_service import bedrock_service
-
-@router.get("/bedrock-test")
-async def bedrock_test():
-    return {
-        "response": bedrock_service.chat("Say hello in one sentence.")
-    }

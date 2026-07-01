@@ -9,6 +9,7 @@ from api.price_history import router as price_history_router
 from api.company import router as company_router
 from api.chat import router as chat_router
 from api.stock import router as stock_router
+from api.compare import router as compare_router
 
 from config.logging_config import logger
 from tools.bootstrap import initialize_tools
@@ -109,5 +110,6 @@ app.include_router(analyze_router)
 app.include_router(stock_router)
 app.include_router(price_history_router)
 app.include_router(company_router)
+app.include_router(compare_router)
 
 logger.info("All API Routes Registered Successfully")

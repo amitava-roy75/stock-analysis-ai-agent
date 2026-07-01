@@ -1,5 +1,8 @@
+from config.logging_config import logger
+
 from tools.base_tool import BaseTool
 from tools.registry import registry
+
 from services.yahoo_finance_service import yahoo_service
 
 
@@ -13,24 +16,45 @@ class FundamentalTool(BaseTool):
         """
         Retrieves company fundamentals.
 
-        Args:
-            input_data (str): Stock symbol
-                Examples:
-                    RELIANCE.NS
-                    TCS.NS
-                    INFY.NS
-                    AAPL
-                    MSFT
+        Supported Inputs
+
+            Infosys
+            INFY
+            INFY.NS
+            TCS
+            RELIANCE
+            AAPL
+            MSFT
         """
 
         try:
-            result = await yahoo_service.get_fundamentals(input_data)
+
+            #
+            # Resolve to Yahoo Finance Symbol
+            #
+
+            symbol = self.normalize_symbol(input_data)
+
+            logger.info(
+                "FundamentalTool : %s -> %s",
+                input_data,
+                symbol
+            )
+
+            result = await yahoo_service.get_fundamentals(symbol)
+
             return result
 
-        except Exception as e:
+        except Exception as ex:
+
+            logger.exception(ex)
+
             return {
+
                 "status": "FAILED",
-                "message": str(e)
+
+                "message": str(ex)
+
             }
 
 

@@ -1,24 +1,52 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
-from models.chat_models import (
-    ChatRequest,
-    ChatResponse
+from models.chat_models import ChatRequest, ChatResponse
+
+from services.bedrock_service import bedrock_service
+
+from guardrails.guard_service import guard_service
+
+from config.logging_config import logger
+
+
+router = APIRouter(
+    prefix="",
+    tags=["Chat"]
 )
 
-from services.bedrock_service import (
-    bedrock_service
+
+@router.post(
+    "/chat",
+    response_model=ChatResponse
 )
-
-router = APIRouter()
-
-
-@router.post("/chat")
 def chat(request: ChatRequest):
 
-    answer = bedrock_service.chat(
-        request.message
-    )
+    try:
 
-    return ChatResponse(
-        response=answer
-    )
+        logger.info("=========================================")
+        logger.info("Chat Request")
+        logger.info("Message : %s", request.message)
+        logger.info("=========================================")
+
+        #
+        # Guard Rail
+        #
+
+        guard_service.validate(request.message)
+
+        answer = bedrock_service.chat(
+            request.message
+        )
+
+        return ChatResponse(
+            response=answer
+        )
+
+    except Exception as ex:
+
+        logger.exception(ex)
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(ex)
+        )

@@ -1,21 +1,31 @@
-import json
-import re
-
 from config.logging_config import logger
-from prompts.reflection_prompt import REFLECTION_PROMPT
-from services.bedrock_service import bedrock_service
+
+from nodes.reflections.analysis_reflection import AnalysisReflection
+from nodes.reflections.compare_reflection import CompareReflection
+from nodes.reflections.knowledge_reflection import KnowledgeReflection
 
 
 class ReflectionNode:
     """
-    Reflection Node
+    Reflection Router
 
-    Generates the final stock analysis report using
-    the outputs from all executed tools.
+    Routes the graph state to the appropriate
+    reflection implementation based on intent.
 
-    It also extracts structured information that
-    the frontend can consume directly.
+        ANALYZE   -> AnalysisReflection
+
+        COMPARE   -> CompareReflection
+
+        KNOWLEDGE -> KnowledgeReflection
     """
+
+    def __init__(self):
+
+        self.analysis = AnalysisReflection()
+
+        self.compare = CompareReflection()
+
+        self.knowledge = KnowledgeReflection()
 
     async def __call__(self, state: dict):
 
@@ -23,176 +33,49 @@ class ReflectionNode:
         logger.info("Reflection Node Started")
         logger.info("========================================")
 
-        tool_results = state.get("tool_results", [])
+        intent = state.get(
+            "intent",
+            ""
+        ).upper()
 
-        prompt = f"""
-{REFLECTION_PROMPT}
+        logger.info("Intent : %s", intent)
 
-Below are the tool results.
+        #
+        # -------------------------------------------------------
+        # KNOWLEDGE
+        # -------------------------------------------------------
+        #
 
-{json.dumps(tool_results, indent=2, default=str)}
+        if intent == "KNOWLEDGE":
 
-============================================================
+            logger.info(
+                "Routing to Knowledge Reflection"
+            )
 
-VERY IMPORTANT
+            return await self.knowledge(state)
 
-Return TWO sections.
+        #
+        # -------------------------------------------------------
+        # COMPARE
+        # -------------------------------------------------------
+        #
 
-SECTION 1
+        if intent == "COMPARE":
 
-Return ONLY valid JSON enclosed between
+            logger.info(
+                "Routing to Compare Reflection"
+            )
 
-<JSON>
+            return await self.compare(state)
 
-...
+        #
+        # -------------------------------------------------------
+        # ANALYZE
+        # -------------------------------------------------------
+        #
 
-</JSON>
+        logger.info(
+            "Routing to Analysis Reflection"
+        )
 
-JSON Schema
-
-{{
-    "summary": "",
-    "recommendation": "BUY",
-    "confidence": "HIGH",
-
-    "metrics": {{
-        "price": "",
-        "marketCap": "",
-        "pe": "",
-        "roe": "",
-        "dividendYield": ""
-    }},
-
-    "news": [
-        {{
-            "title": "",
-            "summary": "",
-            "publisher": "",
-            "published": "",
-            "sentiment": ""
-        }}
-    ]
-}}
-
-SECTION 2
-
-Return the complete markdown report enclosed between
-
-<REPORT>
-
-...
-
-</REPORT>
-
-Do not return anything outside these two sections.
-
-"""
-
-        try:
-
-            answer = bedrock_service.chat(prompt)
-
-            logger.info("LLM Response Received")
-
-            state["raw_answer"] = answer
-
-            try:
-
-                json_match = re.search(
-                    r"<JSON>(.*?)</JSON>",
-                    answer,
-                    re.DOTALL,
-                )
-
-                report_match = re.search(
-                    r"<REPORT>(.*?)</REPORT>",
-                    answer,
-                    re.DOTALL,
-                )
-
-                if json_match:
-
-                    structured = json.loads(
-                        json_match.group(1).strip()
-                    )
-
-                else:
-
-                    structured = {}
-
-                state["summary"] = structured.get(
-                    "summary",
-                    ""
-                )
-
-                state["recommendation"] = structured.get(
-                    "recommendation",
-                    "HOLD"
-                )
-
-                state["confidence"] = structured.get(
-                    "confidence",
-                    "LOW"
-                )
-
-                state["metrics"] = structured.get(
-                    "metrics",
-                    {}
-                )
-
-                state["news"] = structured.get(
-                    "news",
-                    []
-                )
-
-                if report_match:
-
-                    state["final_answer"] = (
-                        report_match.group(1).strip()
-                    )
-
-                else:
-
-                    state["final_answer"] = answer
-
-            except Exception as parse_error:
-
-                logger.warning(
-                    "Unable to parse structured response."
-                )
-
-                logger.exception(parse_error)
-
-                state["summary"] = ""
-
-                state["recommendation"] = "HOLD"
-
-                state["confidence"] = "LOW"
-
-                state["metrics"] = {}
-
-                state["news"] = []
-
-                state["final_answer"] = answer
-
-            logger.info("Reflection Node Completed")
-
-            return state
-
-        except Exception as ex:
-
-            logger.exception(ex)
-
-            state["summary"] = ""
-
-            state["recommendation"] = "HOLD"
-
-            state["confidence"] = "LOW"
-
-            state["metrics"] = {}
-
-            state["news"] = []
-
-            state["final_answer"] = str(ex)
-
-            return state
+        return await self.analysis(state)
